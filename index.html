@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Video Call - Peer.js</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>📹 Simple Video Call</h1>
+        <p>Kết nối video call đơn giản với Peer.js</p>
+      </header>
+
+      <div class="connection-panel" id="connectionPanel">
+        <div class="input-group">
+          <label for="tokenInput">Nhập Token:</label>
+          <input
+            type="text"
+            id="tokenInput"
+            placeholder="Nhập token để kết nối..."
+            maxlength="20"
+          />
+          <button id="connectBtn">Kết nối</button>
+        </div>
+        <div class="status" id="status">Chưa kết nối</div>
+      </div>
+
+      <div class="video-container" id="videoContainer" style="display: none">
+        <div class="video-grid">
+          <div class="video-wrapper">
+            <video id="localVideo" autoplay muted playsinline></video>
+            <div class="video-label">Bạn</div>
+          </div>
+          <div class="video-wrapper">
+            <video id="remoteVideo" autoplay playsinline></video>
+            <div class="video-label">Người kết nối</div>
+          </div>
+        </div>
+        <div class="controls">
+          <button id="muteBtn" class="control-btn">🔇</button>
+          <button id="videoBtn" class="control-btn">📹</button>
+          <button id="disconnectBtn" class="control-btn disconnect">📞</button>
+        </div>
+      </div>
+
+      <div class="info-panel" id="infoPanel">
+        <div class="info-item">
+          <strong>Hướng dẫn:</strong>
+          <ol>
+            <li>Nhập cùng một token trên 2 máy tính</li>
+            <li>Máy đầu tiên sẽ trở thành host</li>
+            <li>Máy thứ hai sẽ tự động join</li>
+            <li>Cho phép camera và microphone khi được yêu cầu</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

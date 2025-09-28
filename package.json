@@ -1,0 +1,24 @@
+{
+  "name": "simple-video-call",
+  "version": "1.0.0",
+  "description": "Ứng dụng video call đơn giản sử dụng Peer.js",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 3000",
+    "dev": "npx live-server --port=3000"
+  },
+  "dependencies": {
+    "peerjs": "^1.5.2"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "live-server": "^1.2.2"
+  },
+  "keywords": [
+    "video-call",
+    "peerjs",
+    "webrtc"
+  ],
+  "author": "",
+  "license": "MIT"
+}
