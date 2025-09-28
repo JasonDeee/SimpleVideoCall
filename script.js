@@ -54,30 +54,90 @@ class VideoCallApp {
     this.connectBtn.disabled = true;
     this.updateStatus("Đang kết nối...", "connecting");
 
-    try {
-      // Initialize Peer.js with token as ID
-      this.peer = new Peer(token, {
+    // Try multiple Peer.js servers
+    const servers = [
+      {
+        host: "0.peerjs.com",
+        port: 443,
+        path: "/",
+        secure: true,
+      },
+      {
         host: "peerjs-server.herokuapp.com",
         port: 443,
         path: "/",
         secure: true,
-      });
+      },
+      {
+        host: "localhost",
+        port: 9000,
+        path: "/",
+        secure: false,
+      },
+    ];
+
+    await this.tryConnectToServers(token, servers);
+  }
+
+  async tryConnectToServers(token, servers) {
+    for (let i = 0; i < servers.length; i++) {
+      const server = servers[i];
+      this.updateStatus(
+        `Đang thử server ${i + 1}/${servers.length}...`,
+        "connecting"
+      );
+
+      try {
+        await this.initializePeer(token, server);
+        return; // Success, exit the loop
+      } catch (error) {
+        console.error(`Failed to connect to server ${i + 1}:`, error);
+        if (i === servers.length - 1) {
+          // Last server failed
+          this.updateStatus(
+            "Không thể kết nối đến bất kỳ server nào. Vui lòng thử lại sau.",
+            "error"
+          );
+          this.connectBtn.disabled = false;
+        }
+      }
+    }
+  }
+
+  async initializePeer(token, serverConfig) {
+    return new Promise((resolve, reject) => {
+      const config = {
+        ...serverConfig,
+        config: {
+          iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" },
+          ],
+        },
+      };
+
+      this.peer = new Peer(token, config);
+
+      const timeout = setTimeout(() => {
+        if (this.peer) {
+          this.peer.destroy();
+        }
+        reject(new Error("Connection timeout"));
+      }, 10000); // 10 second timeout
 
       this.peer.on("open", (id) => {
+        clearTimeout(timeout);
         console.log("Peer ID:", id);
         this.attemptConnection();
+        resolve();
       });
 
       this.peer.on("error", (err) => {
+        clearTimeout(timeout);
         console.error("Peer error:", err);
-        this.updateStatus(`Lỗi kết nối: ${err.message}`, "error");
-        this.connectBtn.disabled = false;
+        reject(err);
       });
-    } catch (error) {
-      console.error("Error initializing peer:", error);
-      this.updateStatus(`Lỗi khởi tạo: ${error.message}`, "error");
-      this.connectBtn.disabled = false;
-    }
+    });
   }
 
   async attemptConnection() {

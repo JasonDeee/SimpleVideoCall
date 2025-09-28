@@ -5,10 +5,13 @@
   "main": "index.html",
   "scripts": {
     "start": "npx http-server -p 3000",
-    "dev": "npx live-server --port=3000"
+    "dev": "npx live-server --port=3000",
+    "peer-server": "node peer-server.js",
+    "peer-server-dev": "nodemon peer-server.js"
   },
   "dependencies": {
-    "peerjs": "^1.5.2"
+    "peerjs": "^1.5.2",
+    "peer": "^1.0.0"
   },
   "devDependencies": {
     "http-server": "^14.1.1",
