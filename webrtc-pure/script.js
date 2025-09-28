@@ -77,7 +77,7 @@ class WebRTCPureVideoCall {
       this.showRoomInfo();
 
       this.updateStatus(
-        "Phòng đã được tạo! Chia sẻ Room ID hoặc QR Code",
+        "Phòng đã được tạo! Chia sẻ Room ID hoặc Link",
         "connected"
       );
     } catch (error) {
@@ -116,7 +116,7 @@ class WebRTCPureVideoCall {
       this.updateStatus("Đã join phòng! Đang chờ kết nối...", "connecting");
 
       // For demo purposes, we'll simulate the connection
-      // In a real app, you'd exchange SDP through QR code or other means
+      // In a real app, you'd exchange SDP through other means
       setTimeout(() => {
         this.simulateConnection();
       }, 2000);
