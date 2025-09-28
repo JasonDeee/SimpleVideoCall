@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebRTC SDP Exchange - No Server</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>📋 WebRTC SDP Exchange</h1>
+        <p>Video call với trao đổi SDP thủ công - Không cần server</p>
+      </header>
+
+      <div class="connection-panel" id="connectionPanel">
+        <div class="step" id="step1">
+          <h3>Bước 1: Khởi tạo kết nối</h3>
+          <div class="action-buttons">
+            <button id="initiateBtn" class="btn primary">
+              Tôi là người gọi
+            </button>
+            <button id="receiveBtn" class="btn secondary">
+              Tôi là người nhận
+            </button>
+          </div>
+        </div>
+
+        <div class="step" id="step2" style="display: none">
+          <h3>Bước 2: Trao đổi thông tin kết nối</h3>
+          <div class="exchange-area">
+            <div class="sdp-section">
+              <h4>Offer/Answer (SDP):</h4>
+              <textarea
+                id="sdpTextarea"
+                placeholder="Dán SDP từ người kia vào đây..."
+              ></textarea>
+              <div class="sdp-buttons">
+                <button id="copySdp" class="btn small">Copy SDP</button>
+                <button id="pasteSdp" class="btn small">Dán SDP</button>
+                <button id="processSdp" class="btn primary">Xử lý SDP</button>
+              </div>
+            </div>
+            <div class="ice-section">
+              <h4>ICE Candidates:</h4>
+              <textarea
+                id="iceTextarea"
+                placeholder="ICE candidates sẽ xuất hiện ở đây..."
+              ></textarea>
+              <div class="ice-buttons">
+                <button id="copyIce" class="btn small">Copy ICE</button>
+                <button id="pasteIce" class="btn small">Dán ICE</button>
+                <button id="processIce" class="btn primary">Thêm ICE</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="status" id="status">Sẵn sàng kết nối</div>
+      </div>
+
+      <div class="video-container" id="videoContainer" style="display: none">
+        <div class="video-grid">
+          <div class="video-wrapper">
+            <video id="localVideo" autoplay muted playsinline></video>
+            <div class="video-label">Bạn</div>
+          </div>
+          <div class="video-wrapper">
+            <video id="remoteVideo" autoplay playsinline></video>
+            <div class="video-label">Người kết nối</div>
+          </div>
+        </div>
+        <div class="controls">
+          <button id="muteBtn" class="control-btn">🔇</button>
+          <button id="videoBtn" class="control-btn">📹</button>
+          <button id="disconnectBtn" class="control-btn disconnect">📞</button>
+        </div>
+      </div>
+
+      <div class="info-panel">
+        <div class="info-item">
+          <strong>💡 Hướng dẫn sử dụng:</strong>
+          <ol>
+            <li>
+              <strong>Người gọi:</strong> Nhấn "Tôi là người gọi" → Copy SDP →
+              Gửi cho người nhận
+            </li>
+            <li>
+              <strong>Người nhận:</strong> Nhấn "Tôi là người nhận" → Dán SDP →
+              Copy Answer → Gửi lại
+            </li>
+            <li><strong>Người gọi:</strong> Dán Answer → Copy ICE → Gửi ICE</li>
+            <li><strong>Người nhận:</strong> Dán ICE → Kết nối thành công!</li>
+          </ol>
+        </div>
+        <div class="info-item">
+          <strong>🔧 Ưu điểm:</strong>
+          <ul>
+            <li>Hoàn toàn không cần server</li>
+            <li>Bảo mật cao (end-to-end)</li>
+            <li>Hoạt động offline sau khi thiết lập</li>
+            <li>Không có giới hạn thời gian</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

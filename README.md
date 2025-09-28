@@ -71,6 +71,22 @@ npm start
 - Thử token khác
 - Refresh trang và thử lại
 - Kiểm tra firewall/antivirus
+- **Lỗi "Lost connection to server"**: Ứng dụng sẽ tự động thử nhiều server khác nhau
+
+### Chạy Peer.js Server Local (Backup)
+
+Nếu các server công khai không hoạt động, bạn có thể chạy server riêng:
+
+```bash
+# Cài đặt peer server
+npm install
+
+# Chạy peer server
+npm run peer-server
+
+# Server sẽ chạy tại http://localhost:9000
+# Ứng dụng sẽ tự động thử kết nối đến server local này
+```
 
 ### Không có âm thanh/video
 
