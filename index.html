@@ -263,6 +263,7 @@
           this.peerConnection = null;
           this.isInitiator = false;
           this.isConnected = false;
+          this.connectionId = null;
 
           // WebRTC configuration
           this.configuration = {
@@ -293,7 +294,7 @@
 
         setupEventListeners() {
           this.startBtn.addEventListener("click", () => this.startCall());
-          this.callBtn.addEventListener("click", () => this.initiateCall());
+          this.callBtn.addEventListener("click", () => this.handleCallButton());
           this.hangupBtn.addEventListener("click", () => this.hangup());
           this.muteBtn.addEventListener("click", () => this.toggleMute());
           this.videoBtn.addEventListener("click", () => this.toggleVideo());
@@ -323,6 +324,16 @@
             this.updateStatus(
               "Lỗi: Không thể truy cập camera/microphone. Vui lòng kiểm tra quyền truy cập."
             );
+          }
+        }
+
+        handleCallButton() {
+          if (this.connectionId && !this.isInitiator) {
+            // Người 2: Tham gia cuộc gọi hiện có
+            this.joinCall();
+          } else {
+            // Người 1: Tạo cuộc gọi mới
+            this.initiateCall();
           }
         }
 
@@ -415,6 +426,10 @@
             );
             this.showConnectionInfo(connectionId);
             this.isInitiator = false;
+            this.connectionId = connectionId;
+          } else {
+            this.isInitiator = true;
+            this.connectionId = null;
           }
         }
 
@@ -441,6 +456,11 @@
             setTimeout(() => {
               this.simulateConnection();
             }, 2000);
+
+            this.callBtn.disabled = true;
+            this.hangupBtn.disabled = false;
+            this.muteBtn.disabled = false;
+            this.videoBtn.disabled = false;
           } catch (error) {
             console.error("Lỗi khi tham gia cuộc gọi:", error);
             this.updateStatus("Lỗi khi tham gia cuộc gọi");
@@ -474,6 +494,7 @@
           this.remoteVideo.srcObject = null;
           this.isConnected = false;
           this.isInitiator = false;
+          this.connectionId = null;
 
           // Clear URL hash
           window.history.replaceState(null, "", window.location.pathname);

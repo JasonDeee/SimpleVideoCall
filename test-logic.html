@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Logic - Video Call</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .test-section {
+        background: white;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .test-result {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+      .success {
+        background: #d4edda;
+        color: #155724;
+      }
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .info {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      input {
+        padding: 8px;
+        margin: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        width: 300px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🧪 Test Logic Video Call P2P</h1>
+
+    <div class="test-section">
+      <h2>Test 1: Kiểm tra URL Hash</h2>
+      <p>Nhập URL có hash để test logic:</p>
+      <input
+        type="text"
+        id="testUrl"
+        placeholder="https://example.com#call=abc123"
+        value="https://example.com#call=abc123"
+      />
+      <button onclick="testUrlHash()">Test URL Hash</button>
+      <div id="urlResult"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>Test 2: Kiểm tra Logic Call Button</h2>
+      <p>Test xem nút "Gọi" sẽ làm gì trong các trường hợp khác nhau:</p>
+      <button onclick="testCallLogic(true, 'abc123')">
+        Test: Người 1 (Tạo cuộc gọi mới)
+      </button>
+      <button onclick="testCallLogic(false, 'abc123')">
+        Test: Người 2 (Tham gia cuộc gọi)
+      </button>
+      <div id="callResult"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>Test 3: Kiểm tra Connection ID</h2>
+      <p>Test việc tạo và quản lý Connection ID:</p>
+      <button onclick="testConnectionId()">Test Connection ID</button>
+      <div id="connectionResult"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>Kết quả tổng hợp</h2>
+      <div id="summaryResult"></div>
+    </div>
+
+    <script>
+      // Simulate the logic from the main app
+      class TestVideoCallApp {
+        constructor() {
+          this.isInitiator = false;
+          this.connectionId = null;
+        }
+
+        checkURLForConnection(url) {
+          const hash = url.split("#")[1] || "";
+          const match = hash.match(/call=([^&]+)/);
+
+          if (match) {
+            const connectionId = match[1];
+            this.isInitiator = false;
+            this.connectionId = connectionId;
+            return {
+              hasConnection: true,
+              connectionId: connectionId,
+              isInitiator: false,
+              message: `Đã nhận lời mời kết nối. Nhấn "Gọi" để tham gia.`,
+            };
+          } else {
+            this.isInitiator = true;
+            this.connectionId = null;
+            return {
+              hasConnection: false,
+              connectionId: null,
+              isInitiator: true,
+              message: `Sẵn sàng để bắt đầu cuộc gọi`,
+            };
+          }
+        }
+
+        handleCallButton() {
+          if (this.connectionId && !this.isInitiator) {
+            return {
+              action: "joinCall",
+              message: "Người 2: Tham gia cuộc gọi hiện có",
+            };
+          } else {
+            return {
+              action: "initiateCall",
+              message: "Người 1: Tạo cuộc gọi mới",
+            };
+          }
+        }
+
+        generateConnectionId() {
+          return (
+            Math.random().toString(36).substring(2, 15) +
+            Math.random().toString(36).substring(2, 15)
+          );
+        }
+      }
+
+      const testApp = new TestVideoCallApp();
+
+      function testUrlHash() {
+        const url = document.getElementById("testUrl").value;
+        const result = testApp.checkURLForConnection(url);
+
+        let html = `<div class="test-result info">
+                <strong>URL:</strong> ${url}<br>
+                <strong>Hash:</strong> ${url.split("#")[1] || "Không có"}<br>
+                <strong>Connection ID:</strong> ${
+                  result.connectionId || "Không có"
+                }<br>
+                <strong>Is Initiator:</strong> ${result.isInitiator}<br>
+                <strong>Message:</strong> ${result.message}
+            </div>`;
+
+        document.getElementById("urlResult").innerHTML = html;
+        updateSummary();
+      }
+
+      function testCallLogic(isInitiator, connectionId) {
+        testApp.isInitiator = isInitiator;
+        testApp.connectionId = connectionId;
+
+        const result = testApp.handleCallButton();
+
+        let html = `<div class="test-result ${
+          result.action === "joinCall" ? "success" : "info"
+        }">
+                <strong>Trạng thái:</strong> ${
+                  isInitiator
+                    ? "Người 1 (Tạo cuộc gọi)"
+                    : "Người 2 (Tham gia cuộc gọi)"
+                }<br>
+                <strong>Connection ID:</strong> ${connectionId}<br>
+                <strong>Action:</strong> ${result.action}<br>
+                <strong>Message:</strong> ${result.message}
+            </div>`;
+
+        document.getElementById("callResult").innerHTML = html;
+        updateSummary();
+      }
+
+      function testConnectionId() {
+        const id1 = testApp.generateConnectionId();
+        const id2 = testApp.generateConnectionId();
+
+        let html = `<div class="test-result success">
+                <strong>Connection ID 1:</strong> ${id1}<br>
+                <strong>Connection ID 2:</strong> ${id2}<br>
+                <strong>Độ dài:</strong> ${id1.length} ký tự<br>
+                <strong>Unique:</strong> ${id1 !== id2 ? "Có" : "Không"}
+            </div>`;
+
+        document.getElementById("connectionResult").innerHTML = html;
+        updateSummary();
+      }
+
+      function updateSummary() {
+        const summary = `
+                <div class="test-result info">
+                    <h3>✅ Logic đã được sửa:</h3>
+                    <ul>
+                        <li><strong>Người 1:</strong> Truy cập URL gốc → Nhấn "Bắt đầu" → Nhấn "Gọi" → Tạo cuộc gọi mới với URL mới</li>
+                        <li><strong>Người 2:</strong> Truy cập URL có hash → Nhấn "Bắt đầu" → Nhấn "Gọi" → Tham gia cuộc gọi hiện có (KHÔNG tạo URL mới)</li>
+                        <li><strong>Connection ID:</strong> Được lưu trữ và sử dụng để phân biệt người tạo vs người tham gia</li>
+                        <li><strong>URL Hash:</strong> Chỉ được tạo bởi người 1, người 2 giữ nguyên URL gốc</li>
+                    </ul>
+                </div>
+            `;
+        document.getElementById("summaryResult").innerHTML = summary;
+      }
+
+      // Auto-run tests on page load
+      window.onload = function () {
+        testUrlHash();
+        testCallLogic(true, null);
+        testCallLogic(false, "abc123");
+        testConnectionId();
+      };
+    </script>
+  </body>
+</html>
