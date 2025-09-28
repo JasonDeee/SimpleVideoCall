@@ -32,6 +32,7 @@ class WebRTCSDPExchange {
     this.remoteVideo = document.getElementById("remoteVideo");
     this.muteBtn = document.getElementById("muteBtn");
     this.videoBtn = document.getElementById("videoBtn");
+    this.showExchangeBtn = document.getElementById("showExchangeBtn");
     this.disconnectBtn = document.getElementById("disconnectBtn");
 
     // Panels
@@ -55,6 +56,9 @@ class WebRTCSDPExchange {
 
     this.muteBtn.addEventListener("click", () => this.toggleMute());
     this.videoBtn.addEventListener("click", () => this.toggleVideo());
+    this.showExchangeBtn.addEventListener("click", () =>
+      this.showExchangePanel()
+    );
     this.disconnectBtn.addEventListener("click", () => this.disconnect());
   }
 
@@ -152,8 +156,16 @@ class WebRTCSDPExchange {
     this.peerConnection.onconnectionstatechange = () => {
       console.log("Connection state:", this.peerConnection.connectionState);
       if (this.peerConnection.connectionState === "connected") {
-        this.updateStatus("Đã kết nối thành công!", "connected");
+        this.updateStatus(
+          "🎉 Đã kết nối thành công! Video call đang hoạt động!",
+          "connected"
+        );
+        this.updateInstructions(
+          "🎉 Hoàn tất! Video call đã kết nối thành công!"
+        );
         this.isConnected = true;
+        // Chỉ ẩn connection panel khi đã kết nối hoàn toàn
+        this.connectionPanel.style.display = "none";
       } else if (this.peerConnection.connectionState === "disconnected") {
         this.updateStatus("Kết nối bị ngắt", "error");
         this.isConnected = false;
@@ -297,11 +309,20 @@ class WebRTCSDPExchange {
   showExchangeInterface() {
     this.step1.style.display = "none";
     this.step2.style.display = "block";
+    // Không ẩn connection panel khi đang trao đổi thông tin
   }
 
   showVideoInterface() {
-    this.connectionPanel.style.display = "none";
+    // Chỉ ẩn connection panel khi đã kết nối thành công
+    // this.connectionPanel.style.display = "none";
     this.videoContainer.style.display = "block";
+  }
+
+  showExchangePanel() {
+    this.connectionPanel.style.display = "block";
+    this.updateInstructions(
+      "📋 Giao diện trao đổi thông tin đã được hiển thị lại"
+    );
   }
 
   toggleMute() {

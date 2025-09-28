@@ -315,6 +315,21 @@ video {
   border-color: #bd2130;
 }
 
+.connection-status {
+  text-align: center;
+  padding: 15px;
+  background: #d4edda;
+  border-radius: 8px;
+  margin-top: 15px;
+  border-left: 4px solid #28a745;
+}
+
+.connection-status p {
+  margin: 0;
+  color: #155724;
+  font-weight: 600;
+}
+
 .info-panel {
   background: white;
   border-radius: 15px;
