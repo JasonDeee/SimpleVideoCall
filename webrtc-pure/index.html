@@ -37,8 +37,10 @@
               </div>
             </div>
             <div class="qr-container">
-              <div id="qrcode"></div>
-              <p>Quét QR code để join phòng</p>
+              <div class="simple-info">
+                <p>📱 Chia sẻ Room ID này cho người khác</p>
+                <p>🔗 Hoặc gửi link: <span id="shareLink"></span></p>
+              </div>
             </div>
           </div>
         </div>
@@ -76,8 +78,10 @@
         <div class="info-item">
           <strong>💡 Cách hoạt động:</strong>
           <ol>
-            <li><strong>Host:</strong> Tạo phòng → Chia sẻ Room ID/QR Code</li>
-            <li><strong>Guest:</strong> Nhập Room ID hoặc quét QR Code</li>
+            <li>
+              <strong>Host:</strong> Tạo phòng → Chia sẻ Room ID hoặc Link
+            </li>
+            <li><strong>Guest:</strong> Nhập Room ID hoặc click link</li>
             <li>
               <strong>Kết nối:</strong> WebRTC thiết lập kết nối trực tiếp P2P
             </li>
@@ -90,7 +94,7 @@
           <strong>🔧 Công nghệ:</strong>
           <ul>
             <li>WebRTC thuần túy (không Peer.js)</li>
-            <li>QR Code cho signaling</li>
+            <li>Room ID cho signaling</li>
             <li>STUN servers cho NAT traversal</li>
             <li>P2P connection hoàn toàn</li>
           </ul>
@@ -98,8 +102,6 @@
       </div>
     </div>
 
-    <!-- QR Code Library -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

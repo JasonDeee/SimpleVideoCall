@@ -25,6 +25,7 @@ class WebRTCPureVideoCall {
     this.joinWithId = document.getElementById("joinWithId");
     this.roomIdInput = document.getElementById("roomIdInput");
     this.roomIdDisplay = document.getElementById("roomIdDisplay");
+    this.shareLink = document.getElementById("shareLink");
     this.status = document.getElementById("status");
     this.localVideo = document.getElementById("localVideo");
     this.remoteVideo = document.getElementById("remoteVideo");
@@ -40,6 +41,7 @@ class WebRTCPureVideoCall {
     this.videoContainer = document.getElementById("videoContainer");
 
     this.initializeEventListeners();
+    this.checkForRoomInURL();
   }
 
   initializeEventListeners() {
@@ -129,30 +131,25 @@ class WebRTCPureVideoCall {
     this.step2.style.display = "block";
 
     this.roomIdDisplay.textContent = this.roomId;
-    this.generateQRCode();
+    this.generateShareLink();
 
     // Show video interface for host
     this.showVideoInterface();
   }
 
-  generateQRCode() {
-    const qrContainer = document.getElementById("qrcode");
-    qrContainer.innerHTML = "";
+  generateShareLink() {
+    // Create a simple share link with room ID
+    const currentUrl = window.location.href.split("?")[0];
+    const shareUrl = `${currentUrl}?room=${this.roomId}`;
+    this.shareLink.textContent = shareUrl;
 
-    // Create connection data
-    const connectionData = {
-      roomId: this.roomId,
-      timestamp: Date.now(),
-    };
-
-    // Generate QR code
-    QRCode.toCanvas(qrContainer, JSON.stringify(connectionData), {
-      width: 200,
-      margin: 2,
-      color: {
-        dark: "#667eea",
-        light: "#ffffff",
-      },
+    // Auto-copy the link to clipboard
+    this.shareLink.style.cursor = "pointer";
+    this.shareLink.title = "Click to copy link";
+    this.shareLink.addEventListener("click", () => {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        this.updateStatus("Link đã được copy!", "connected");
+      });
     });
   }
 
@@ -320,6 +317,18 @@ class WebRTCPureVideoCall {
     } catch (error) {
       console.error("Error copying room ID:", error);
       this.updateStatus("Không thể copy Room ID", "error");
+    }
+  }
+
+  checkForRoomInURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get("room");
+
+    if (roomId) {
+      // Auto-fill room ID and show join form
+      this.roomIdInput.value = roomId;
+      this.showJoinForm();
+      this.updateStatus(`Tìm thấy Room ID trong URL: ${roomId}`, "connecting");
     }
   }
 
