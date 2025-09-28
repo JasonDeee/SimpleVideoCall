@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Video Call P2P - Không cần Server</title>
+    <title>Video Call P2P - Real WebRTC</title>
     <style>
       * {
         margin: 0;
@@ -179,6 +179,32 @@
         line-height: 1.5;
       }
 
+      .config-section {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+      }
+
+      .config-section h3 {
+        margin-bottom: 15px;
+        color: #ffd700;
+      }
+
+      .config-input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        margin-bottom: 10px;
+      }
+
+      .config-input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+      }
+
       @media (max-width: 768px) {
         .video-container {
           grid-template-columns: 1fr;
@@ -209,8 +235,21 @@
   <body>
     <div class="container">
       <div class="header">
-        <h1>📹 Video Call P2P</h1>
-        <p>Kết nối trực tiếp không cần server</p>
+        <h1>📹 Video Call P2P - Real WebRTC</h1>
+        <p>Kết nối thật với Cloudflare Workers Signaling</p>
+      </div>
+
+      <div class="config-section">
+        <h3>⚙️ Cấu hình Signaling Server</h3>
+        <input
+          type="text"
+          id="signalingUrl"
+          class="config-input"
+          placeholder="https://simple-vid-call.caocv-work.workers.dev/"
+          value="https://simple-vid-call.caocv-work.workers.dev/"
+        />
+        <button class="btn" id="testConnectionBtn">🔗 Test Connection</button>
+        <div id="connectionStatus"></div>
       </div>
 
       <div class="video-container">
@@ -243,27 +282,35 @@
         <h3>📋 Hướng dẫn sử dụng:</h3>
         <ol>
           <li>
-            <strong>Người 1:</strong> Nhấn "Bắt đầu" để khởi tạo camera và
-            microphone
+            <strong>Cấu hình:</strong> Nhập URL của Cloudflare Worker signaling
+            server
           </li>
-          <li><strong>Người 1:</strong> Nhấn "Gọi" để tạo mã kết nối</li>
-          <li><strong>Người 1:</strong> Chia sẻ URL hiện tại cho người 2</li>
-          <li><strong>Người 2:</strong> Truy cập URL và nhấn "Bắt đầu"</li>
-          <li><strong>Người 2:</strong> Nhấn "Gọi" để kết nối</li>
-          <li>Cuộc gọi sẽ được thiết lập tự động!</li>
+          <li>
+            <strong>Test:</strong> Nhấn "Test Connection" để kiểm tra kết nối
+          </li>
+          <li><strong>Người 1:</strong> Nhấn "Bắt đầu" → "Gọi" để tạo room</li>
+          <li><strong>Người 1:</strong> Chia sẻ Room ID cho người 2</li>
+          <li>
+            <strong>Người 2:</strong> Nhấn "Bắt đầu" → "Gọi" và nhập Room ID
+          </li>
+          <li>
+            <strong>Kết nối:</strong> Cuộc gọi P2P thật sẽ được thiết lập!
+          </li>
         </ol>
       </div>
     </div>
 
     <script>
-      class VideoCallApp {
+      class RealVideoCallApp {
         constructor() {
           this.localStream = null;
           this.remoteStream = null;
           this.peerConnection = null;
+          this.signaling = null;
           this.isInitiator = false;
           this.isConnected = false;
-          this.connectionId = null;
+          this.roomId = null;
+          this.peerId = null;
 
           // WebRTC configuration
           this.configuration = {
@@ -275,7 +322,6 @@
 
           this.initializeElements();
           this.setupEventListeners();
-          this.checkURLForConnection();
         }
 
         initializeElements() {
@@ -284,12 +330,15 @@
           this.status = document.getElementById("status");
           this.connectionInfo = document.getElementById("connectionInfo");
           this.connectionDetails = document.getElementById("connectionDetails");
+          this.connectionStatus = document.getElementById("connectionStatus");
 
           this.startBtn = document.getElementById("startBtn");
           this.callBtn = document.getElementById("callBtn");
           this.hangupBtn = document.getElementById("hangupBtn");
           this.muteBtn = document.getElementById("muteBtn");
           this.videoBtn = document.getElementById("videoBtn");
+          this.testConnectionBtn = document.getElementById("testConnectionBtn");
+          this.signalingUrl = document.getElementById("signalingUrl");
         }
 
         setupEventListeners() {
@@ -298,14 +347,61 @@
           this.hangupBtn.addEventListener("click", () => this.hangup());
           this.muteBtn.addEventListener("click", () => this.toggleMute());
           this.videoBtn.addEventListener("click", () => this.toggleVideo());
-
-          // Listen for URL changes
-          window.addEventListener("hashchange", () =>
-            this.checkURLForConnection()
+          this.testConnectionBtn.addEventListener("click", () =>
+            this.testConnection()
           );
         }
 
+        async testConnection() {
+          const url = this.signalingUrl.value.trim();
+          if (!url) {
+            this.updateConnectionStatus(
+              "Vui lòng nhập URL signaling server",
+              "error"
+            );
+            return;
+          }
+
+          try {
+            this.updateConnectionStatus("Đang test kết nối...", "info");
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.name === "WebRTC Signaling Server") {
+              this.updateConnectionStatus("✅ Kết nối thành công!", "success");
+              this.signaling = new WebRTCSignaling(url);
+            } else {
+              this.updateConnectionStatus(
+                "❌ Không phải signaling server",
+                "error"
+              );
+            }
+          } catch (error) {
+            console.error("Connection test failed:", error);
+            this.updateConnectionStatus(
+              "❌ Không thể kết nối đến server",
+              "error"
+            );
+          }
+        }
+
+        updateConnectionStatus(message, type) {
+          this.connectionStatus.innerHTML = `<div style="padding: 10px; border-radius: 5px; margin-top: 10px; ${
+            type === "success"
+              ? "background: #d4edda; color: #155724;"
+              : type === "error"
+              ? "background: #f8d7da; color: #721c24;"
+              : "background: #d1ecf1; color: #0c5460;"
+          }">${message}</div>`;
+        }
+
         async startCall() {
+          if (!this.signaling) {
+            this.updateStatus("Vui lòng test kết nối signaling server trước");
+            return;
+          }
+
           try {
             this.updateStatus("Đang khởi tạo camera và microphone...");
 
@@ -328,11 +424,9 @@
         }
 
         handleCallButton() {
-          if (this.connectionId && !this.isInitiator) {
-            // Người 2: Tham gia cuộc gọi hiện có
+          if (this.roomId && !this.isInitiator) {
             this.joinCall();
           } else {
-            // Người 1: Tạo cuộc gọi mới
             this.initiateCall();
           }
         }
@@ -346,6 +440,11 @@
           try {
             this.updateStatus("Đang thiết lập kết nối...");
 
+            // Generate room ID
+            this.roomId = this.generateRoomId();
+            this.peerId = this.generatePeerId();
+            this.isInitiator = true;
+
             // Create peer connection
             this.peerConnection = new RTCPeerConnection(this.configuration);
             this.setupPeerConnection();
@@ -355,23 +454,13 @@
               this.peerConnection.addTrack(track, this.localStream);
             });
 
-            // Create offer
-            const offer = await this.peerConnection.createOffer();
-            await this.peerConnection.setLocalDescription(offer);
-
-            // Generate connection ID
-            const connectionId = this.generateConnectionId();
-            this.isInitiator = true;
-
-            // Update URL with connection info
-            const currentUrl = new URL(window.location);
-            currentUrl.hash = `call=${connectionId}`;
-            window.history.replaceState(null, "", currentUrl.toString());
+            // Connect to signaling server
+            await this.signaling.connect(this.roomId, this.peerId);
 
             this.updateStatus(
-              `Đã tạo cuộc gọi. Chia sẻ URL này: ${currentUrl.toString()}`
+              `Đã tạo room: ${this.roomId}. Chia sẻ Room ID này cho người 2.`
             );
-            this.showConnectionInfo(connectionId);
+            this.showConnectionInfo();
 
             this.callBtn.disabled = true;
             this.hangupBtn.disabled = false;
@@ -383,11 +472,55 @@
           }
         }
 
+        async joinCall() {
+          if (!this.localStream) {
+            this.updateStatus("Vui lòng bắt đầu camera trước");
+            return;
+          }
+
+          // Prompt for room ID
+          const roomId = prompt("Nhập Room ID từ người 1:");
+          if (!roomId) {
+            this.updateStatus("Vui lòng nhập Room ID");
+            return;
+          }
+
+          try {
+            this.updateStatus("Đang tham gia cuộc gọi...");
+
+            this.roomId = roomId;
+            this.peerId = this.generatePeerId();
+            this.isInitiator = false;
+
+            // Create peer connection
+            this.peerConnection = new RTCPeerConnection(this.configuration);
+            this.setupPeerConnection();
+
+            // Add local stream
+            this.localStream.getTracks().forEach((track) => {
+              this.peerConnection.addTrack(track, this.localStream);
+            });
+
+            // Connect to signaling server
+            await this.signaling.connect(this.roomId, this.peerId);
+
+            this.updateStatus(`Đã tham gia room: ${this.roomId}`);
+            this.showConnectionInfo();
+
+            this.callBtn.disabled = true;
+            this.hangupBtn.disabled = false;
+            this.muteBtn.disabled = false;
+            this.videoBtn.disabled = false;
+          } catch (error) {
+            console.error("Lỗi khi tham gia cuộc gọi:", error);
+            this.updateStatus("Lỗi khi tham gia cuộc gọi");
+          }
+        }
+
         setupPeerConnection() {
           this.peerConnection.onicecandidate = (event) => {
-            if (event.candidate) {
-              // In a real app, you'd send this to the other peer
-              console.log("ICE candidate:", event.candidate);
+            if (event.candidate && this.signaling) {
+              this.signaling.sendIceCandidate(event.candidate);
             }
           };
 
@@ -404,7 +537,7 @@
               this.peerConnection.connectionState
             );
             if (this.peerConnection.connectionState === "connected") {
-              this.updateStatus("Kết nối đã được thiết lập!");
+              this.updateStatus("Kết nối P2P đã được thiết lập!");
             } else if (
               this.peerConnection.connectionState === "disconnected" ||
               this.peerConnection.connectionState === "failed"
@@ -415,230 +548,88 @@
           };
         }
 
-        checkURLForConnection() {
-          const hash = window.location.hash;
-          const match = hash.match(/call=([^&]+)/);
+        async handleSignalingMessage(message) {
+          console.log("Received signaling message:", message);
 
-          if (match) {
-            const connectionId = match[1];
-            const urlParams = new URLSearchParams(hash.substring(1));
-            const hasOffer = urlParams.has("offer");
+          switch (message.type) {
+            case "joined":
+              this.updateStatus(`Đã tham gia room ${message.roomId}`);
+              break;
 
-            this.updateStatus(
-              hasOffer
-                ? `Đã nhận lời mời kết nối với offer. Nhấn "Gọi" để tham gia.`
-                : `Đã nhận lời mời kết nối. Nhấn "Gọi" để tham gia.`
-            );
-            this.showConnectionInfo(connectionId);
-            this.isInitiator = false;
-            this.connectionId = connectionId;
-          } else {
-            this.isInitiator = true;
-            this.connectionId = null;
+            case "peer-joined":
+              this.updateStatus(`Peer ${message.peerId} đã tham gia`);
+              break;
+
+            case "ready":
+              this.updateStatus("Cả 2 peers đã sẵn sàng, bắt đầu kết nối...");
+              if (this.isInitiator) {
+                await this.createOffer();
+              }
+              break;
+
+            case "offer":
+              await this.handleOffer(message.offer);
+              break;
+
+            case "answer":
+              await this.handleAnswer(message.answer);
+              break;
+
+            case "ice-candidate":
+              await this.handleIceCandidate(message.candidate);
+              break;
+
+            case "peer-left":
+              this.updateStatus(`Peer ${message.peerId} đã rời khỏi cuộc gọi`);
+              break;
+
+            case "error":
+              this.updateStatus(`Lỗi: ${message.message}`);
+              break;
           }
         }
 
-        async joinCall() {
-          if (!this.localStream) {
-            this.updateStatus("Vui lòng bắt đầu camera trước");
-            return;
-          }
-
-          try {
-            this.updateStatus("Đang tham gia cuộc gọi...");
-
-            // Create peer connection
-            this.peerConnection = new RTCPeerConnection(this.configuration);
-            this.setupPeerConnection();
-
-            // Add local stream
-            this.localStream.getTracks().forEach((track) => {
-              this.peerConnection.addTrack(track, this.localStream);
-            });
-
-            // For demo purposes, we'll simulate the connection
-            // In a real app, you'd exchange offers/answers through a signaling server
-            setTimeout(() => {
-              this.simulateConnection();
-            }, 2000);
-
-            this.callBtn.disabled = true;
-            this.hangupBtn.disabled = false;
-            this.muteBtn.disabled = false;
-            this.videoBtn.disabled = false;
-          } catch (error) {
-            console.error("Lỗi khi tham gia cuộc gọi:", error);
-            this.updateStatus("Lỗi khi tham gia cuộc gọi");
-          }
-        }
-
-        simulateConnection() {
-          // For demo purposes, we'll create a simple peer-to-peer simulation
-          // In a real app, this would be handled by WebRTC signaling
-
-          if (this.isInitiator) {
-            // Người 1: Tạo offer và gửi qua URL
-            this.createOfferAndShare();
-          } else {
-            // Người 2: Tạo answer và kết nối
-            this.createAnswerAndConnect();
-          }
-        }
-
-        async createOfferAndShare() {
+        async createOffer() {
           try {
             const offer = await this.peerConnection.createOffer();
             await this.peerConnection.setLocalDescription(offer);
-
-            // Encode offer to base64 and add to URL
-            const offerData = btoa(JSON.stringify(offer));
-            const currentUrl = new URL(window.location);
-            currentUrl.hash = `call=${this.connectionId}&offer=${offerData}`;
-            window.history.replaceState(null, "", currentUrl.toString());
-
-            this.updateStatus("Đã tạo offer. Chia sẻ URL này cho người 2.");
-            this.showConnectionInfo(this.connectionId);
-
-            // Simulate receiving answer after 3 seconds
-            setTimeout(() => {
-              this.simulateAnswer();
-            }, 3000);
+            this.signaling.sendOffer(offer);
+            this.updateStatus("Đã gửi offer");
           } catch (error) {
-            console.error("Lỗi khi tạo offer:", error);
+            console.error("Error creating offer:", error);
             this.updateStatus("Lỗi khi tạo offer");
           }
         }
 
-        async createAnswerAndConnect() {
+        async handleOffer(offer) {
           try {
-            // Get offer from URL
-            const urlParams = new URLSearchParams(
-              window.location.hash.substring(1)
-            );
-            const offerData = urlParams.get("offer");
-
-            if (offerData) {
-              const offer = JSON.parse(atob(offerData));
-              await this.peerConnection.setRemoteDescription(offer);
-
-              const answer = await this.peerConnection.createAnswer();
-              await this.peerConnection.setLocalDescription(answer);
-
-              this.updateStatus("Đã tạo answer và kết nối!");
-
-              // Simulate connection established
-              setTimeout(() => {
-                this.establishConnection();
-              }, 1000);
-            } else {
-              this.updateStatus("Không tìm thấy offer trong URL");
-            }
+            await this.peerConnection.setRemoteDescription(offer);
+            const answer = await this.peerConnection.createAnswer();
+            await this.peerConnection.setLocalDescription(answer);
+            this.signaling.sendAnswer(answer);
+            this.updateStatus("Đã gửi answer");
           } catch (error) {
-            console.error("Lỗi khi tạo answer:", error);
-            this.updateStatus("Lỗi khi tạo answer");
+            console.error("Error handling offer:", error);
+            this.updateStatus("Lỗi khi xử lý offer");
           }
         }
 
-        async simulateAnswer() {
+        async handleAnswer(answer) {
           try {
-            // Simulate receiving answer from peer 2
-            const answer = {
-              type: "answer",
-              sdp: "v=0\r\no=- 123456789 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\na=group:BUNDLE 0\r\na=msid-semantic: WMS\r\nm=video 9 UDP/TLS/RTP/SAVPF 96\r\nc=IN IP4 0.0.0.0\r\na=rtcp:9 IN IP4 0.0.0.0\r\na=ice-ufrag:test\r\na=ice-pwd:test\r\na=ice-options:trickle\r\na=fingerprint:sha-256 test\r\na=setup:active\r\na=mid:0\r\na=sendrecv\r\na=rtcp-mux\r\na=rtpmap:96 VP8/90000\r\n",
-            };
-
             await this.peerConnection.setRemoteDescription(answer);
-            this.establishConnection();
+            this.updateStatus("Đã nhận answer");
           } catch (error) {
-            console.error("Lỗi khi simulate answer:", error);
-            this.updateStatus("Lỗi khi kết nối");
+            console.error("Error handling answer:", error);
+            this.updateStatus("Lỗi khi xử lý answer");
           }
         }
 
-        establishConnection() {
-          // Create a mock remote stream for demo
-          // In real WebRTC, this would come from the peer connection
-          this.createMockRemoteStream();
-
-          this.isConnected = true;
-          this.updateStatus("Đã kết nối thành công! (Demo mode)");
-
-          this.callBtn.disabled = true;
-          this.hangupBtn.disabled = false;
-          this.muteBtn.disabled = false;
-          this.videoBtn.disabled = false;
-        }
-
-        async createMockRemoteStream() {
+        async handleIceCandidate(candidate) {
           try {
-            // Create a different mock stream for remote user
-            // This simulates receiving video from the other person
-            const canvas = document.createElement("canvas");
-            canvas.width = 640;
-            canvas.height = 480;
-            const ctx = canvas.getContext("2d");
-
-            // Create a simple pattern to differentiate from local video
-            const gradient = ctx.createLinearGradient(
-              0,
-              0,
-              canvas.width,
-              canvas.height
-            );
-            gradient.addColorStop(0, "#ff6b6b");
-            gradient.addColorStop(1, "#4ecdc4");
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Add text to show it's remote video
-            ctx.fillStyle = "white";
-            ctx.font = "24px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText(
-              "Remote Video Stream",
-              canvas.width / 2,
-              canvas.height / 2
-            );
-            ctx.fillText(
-              "(Demo Mode)",
-              canvas.width / 2,
-              canvas.height / 2 + 30
-            );
-
-            // Convert canvas to stream
-            const stream = canvas.captureStream(30);
-
-            // Add audio track (silent)
-            const audioContext = new AudioContext();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            gainNode.gain.value = 0; // Silent
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            const audioStream = audioContext.createMediaStreamDestination();
-            oscillator.connect(audioStream);
-            oscillator.start();
-
-            // Combine video and audio
-            this.remoteStream = new MediaStream([
-              ...stream.getVideoTracks(),
-              ...audioStream.stream.getAudioTracks(),
-            ]);
-
-            this.remoteVideo.srcObject = this.remoteStream;
+            await this.peerConnection.addIceCandidate(candidate);
+            console.log("Added ICE candidate");
           } catch (error) {
-            console.error("Lỗi khi tạo mock remote stream:", error);
-            // Fallback: use a simple colored div
-            this.remoteVideo.style.background =
-              "linear-gradient(45deg, #ff6b6b, #4ecdc4)";
-            this.remoteVideo.style.display = "flex";
-            this.remoteVideo.style.alignItems = "center";
-            this.remoteVideo.style.justifyContent = "center";
-            this.remoteVideo.style.color = "white";
-            this.remoteVideo.style.fontSize = "24px";
-            this.remoteVideo.style.fontWeight = "bold";
-            this.remoteVideo.innerHTML = "Remote Video<br/>(Demo Mode)";
+            console.error("Error adding ICE candidate:", error);
           }
         }
 
@@ -653,27 +644,18 @@
             this.remoteStream = null;
           }
 
-          this.remoteVideo.srcObject = null;
-          // Reset remote video styling
-          this.remoteVideo.style.background = "";
-          this.remoteVideo.style.display = "";
-          this.remoteVideo.style.alignItems = "";
-          this.remoteVideo.style.justifyContent = "";
-          this.remoteVideo.style.color = "";
-          this.remoteVideo.style.fontSize = "";
-          this.remoteVideo.style.fontWeight = "";
-          this.remoteVideo.innerHTML = "";
+          if (this.signaling) {
+            this.signaling.disconnect();
+          }
 
+          this.remoteVideo.srcObject = null;
           this.isConnected = false;
           this.isInitiator = false;
-          this.connectionId = null;
-
-          // Clear URL hash
-          window.history.replaceState(null, "", window.location.pathname);
+          this.roomId = null;
+          this.peerId = null;
 
           this.updateStatus("Cuộc gọi đã kết thúc");
           this.hideConnectionInfo();
-
           this.resetButtons();
         }
 
@@ -721,21 +703,23 @@
           console.log("Status:", message);
         }
 
-        generateConnectionId() {
-          return (
-            Math.random().toString(36).substring(2, 15) +
-            Math.random().toString(36).substring(2, 15)
-          );
+        generateRoomId() {
+          return Math.random().toString(36).substring(2, 15);
         }
 
-        showConnectionInfo(connectionId) {
+        generatePeerId() {
+          return Math.random().toString(36).substring(2, 15);
+        }
+
+        showConnectionInfo() {
           this.connectionDetails.innerHTML = `
-                    <strong>Mã kết nối:</strong> ${connectionId}<br>
-                    <strong>URL hiện tại:</strong> ${window.location.href}<br>
-                    <strong>Trạng thái:</strong> ${
-                      this.isInitiator ? "Người tạo cuộc gọi" : "Người tham gia"
-                    }
-                `;
+            <strong>Room ID:</strong> ${this.roomId}<br>
+            <strong>Peer ID:</strong> ${this.peerId}<br>
+            <strong>Signaling Server:</strong> ${this.signalingUrl.value}<br>
+            <strong>Trạng thái:</strong> ${
+              this.isInitiator ? "Người tạo cuộc gọi" : "Người tham gia"
+            }
+          `;
           this.connectionInfo.style.display = "block";
         }
 
@@ -744,9 +728,104 @@
         }
       }
 
+      class WebRTCSignaling {
+        constructor(serverUrl) {
+          this.serverUrl = serverUrl;
+          this.ws = null;
+          this.roomId = null;
+          this.peerId = null;
+          this.onMessage = null;
+        }
+
+        async connect(roomId, peerId) {
+          return new Promise((resolve, reject) => {
+            try {
+              const wsUrl = this.serverUrl.replace(/^https?/, "wss");
+              this.ws = new WebSocket(`${wsUrl}/ws`);
+              this.roomId = roomId;
+              this.peerId = peerId;
+
+              this.ws.onopen = () => {
+                console.log("WebSocket connected");
+                this.send({
+                  type: "join",
+                  roomId: roomId,
+                  peerId: peerId,
+                });
+                resolve();
+              };
+
+              this.ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                if (this.onMessage) {
+                  this.onMessage(message);
+                }
+              };
+
+              this.ws.onclose = () => {
+                console.log("WebSocket disconnected");
+              };
+
+              this.ws.onerror = (error) => {
+                console.error("WebSocket error:", error);
+                reject(error);
+              };
+            } catch (error) {
+              reject(error);
+            }
+          });
+        }
+
+        send(message) {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify(message));
+          }
+        }
+
+        sendOffer(offer) {
+          this.send({
+            type: "offer",
+            roomId: this.roomId,
+            offer: offer,
+          });
+        }
+
+        sendAnswer(answer) {
+          this.send({
+            type: "answer",
+            roomId: this.roomId,
+            answer: answer,
+          });
+        }
+
+        sendIceCandidate(candidate) {
+          this.send({
+            type: "ice-candidate",
+            roomId: this.roomId,
+            candidate: candidate,
+          });
+        }
+
+        disconnect() {
+          if (this.ws) {
+            this.send({
+              type: "leave",
+              roomId: this.roomId,
+            });
+            this.ws.close();
+            this.ws = null;
+          }
+        }
+      }
+
       // Initialize the app when page loads
       document.addEventListener("DOMContentLoaded", () => {
-        new VideoCallApp();
+        const app = new RealVideoCallApp();
+
+        // Set up signaling message handler
+        app.signaling = new WebRTCSignaling("");
+        app.signaling.onMessage = (message) =>
+          app.handleSignalingMessage(message);
       });
     </script>
   </body>
