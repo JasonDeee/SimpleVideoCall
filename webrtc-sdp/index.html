@@ -9,48 +9,82 @@
   <body>
     <div class="container">
       <header>
-        <h1>📋 WebRTC SDP Exchange</h1>
-        <p>Video call với trao đổi SDP thủ công - Không cần server</p>
+        <h1>📞 Video Call P2P - SDP Exchange</h1>
+        <p>
+          Video call trực tiếp không cần server - Trao đổi thông tin kết nối thủ
+          công
+        </p>
       </header>
 
       <div class="connection-panel" id="connectionPanel">
         <div class="step" id="step1">
-          <h3>Bước 1: Khởi tạo kết nối</h3>
-          <div class="action-buttons">
-            <button id="initiateBtn" class="btn primary">
-              Tôi là người gọi
-            </button>
-            <button id="receiveBtn" class="btn secondary">
-              Tôi là người nhận
-            </button>
+          <h3>🎯 Bước 1: Chọn vai trò</h3>
+          <div class="role-explanation">
+            <div class="role-card">
+              <h4>📞 Người gọi (Caller)</h4>
+              <p>Bạn sẽ tạo cuộc gọi và gửi thông tin kết nối cho người khác</p>
+              <button id="initiateBtn" class="btn primary">
+                Tôi là người gọi
+              </button>
+            </div>
+            <div class="role-card">
+              <h4>📱 Người nhận (Receiver)</h4>
+              <p>Bạn sẽ nhận cuộc gọi và phản hồi thông tin kết nối</p>
+              <button id="receiveBtn" class="btn secondary">
+                Tôi là người nhận
+              </button>
+            </div>
           </div>
         </div>
 
         <div class="step" id="step2" style="display: none">
-          <h3>Bước 2: Trao đổi thông tin kết nối</h3>
+          <h3>📋 Bước 2: Trao đổi thông tin kết nối</h3>
+
+          <div class="instructions" id="instructions">
+            <div class="instruction-step" id="step2-1">
+              <h4>📤 Gửi thông tin kết nối</h4>
+              <p>
+                Copy thông tin bên dưới và gửi cho người kia qua chat, email,
+                hoặc bất kỳ cách nào
+              </p>
+            </div>
+          </div>
+
           <div class="exchange-area">
             <div class="sdp-section">
-              <h4>Offer/Answer (SDP):</h4>
+              <h4>🔗 Thông tin kết nối (SDP):</h4>
+              <div class="info-box">
+                <p>
+                  <strong>SDP là gì?</strong> Thông tin mô tả khả năng
+                  video/audio của thiết bị
+                </p>
+              </div>
               <textarea
                 id="sdpTextarea"
-                placeholder="Dán SDP từ người kia vào đây..."
+                placeholder="Thông tin kết nối sẽ xuất hiện ở đây..."
               ></textarea>
               <div class="sdp-buttons">
-                <button id="copySdp" class="btn small">Copy SDP</button>
-                <button id="pasteSdp" class="btn small">Dán SDP</button>
-                <button id="processSdp" class="btn primary">Xử lý SDP</button>
+                <button id="copySdp" class="btn small">📋 Copy</button>
+                <button id="pasteSdp" class="btn small">📥 Dán</button>
+                <button id="processSdp" class="btn primary">⚡ Xử lý</button>
               </div>
             </div>
             <div class="ice-section">
-              <h4>ICE Candidates:</h4>
+              <h4>🌐 Thông tin mạng (ICE):</h4>
+              <div class="info-box">
+                <p>
+                  <strong>ICE là gì?</strong> Thông tin giúp vượt qua firewall
+                  và kết nối trực tiếp
+                </p>
+              </div>
               <textarea
                 id="iceTextarea"
-                placeholder="ICE candidates sẽ xuất hiện ở đây..."
+                placeholder="Thông tin mạng sẽ xuất hiện ở đây..."
               ></textarea>
               <div class="ice-buttons">
-                <button id="copyIce" class="btn small">Copy ICE</button>
-                <button id="pasteIce" class="btn small">Dán ICE</button>
-                <button id="processIce" class="btn primary">Thêm ICE</button>
+                <button id="copyIce" class="btn small">📋 Copy</button>
+                <button id="pasteIce" class="btn small">📥 Dán</button>
+                <button id="processIce" class="btn primary">⚡ Thêm</button>
               </div>
             </div>
           </div>
@@ -79,27 +113,43 @@
 
       <div class="info-panel">
         <div class="info-item">
-          <strong>💡 Hướng dẫn sử dụng:</strong>
-          <ol>
-            <li>
-              <strong>Người gọi:</strong> Nhấn "Tôi là người gọi" → Copy SDP →
-              Gửi cho người nhận
-            </li>
-            <li>
-              <strong>Người nhận:</strong> Nhấn "Tôi là người nhận" → Dán SDP →
-              Copy Answer → Gửi lại
-            </li>
-            <li><strong>Người gọi:</strong> Dán Answer → Copy ICE → Gửi ICE</li>
-            <li><strong>Người nhận:</strong> Dán ICE → Kết nối thành công!</li>
-          </ol>
+          <strong>📖 Hướng dẫn chi tiết:</strong>
+          <div class="guide-steps">
+            <div class="guide-step">
+              <span class="step-number">1</span>
+              <div class="step-content">
+                <strong>Người gọi:</strong> Chọn "Tôi là người gọi" → Copy thông
+                tin SDP → Gửi cho người nhận
+              </div>
+            </div>
+            <div class="guide-step">
+              <span class="step-number">2</span>
+              <div class="step-content">
+                <strong>Người nhận:</strong> Chọn "Tôi là người nhận" → Dán SDP
+                → Copy Answer → Gửi lại
+              </div>
+            </div>
+            <div class="guide-step">
+              <span class="step-number">3</span>
+              <div class="step-content">
+                <strong>Người gọi:</strong> Dán Answer → Copy ICE → Gửi ICE
+              </div>
+            </div>
+            <div class="guide-step">
+              <span class="step-number">4</span>
+              <div class="step-content">
+                <strong>Người nhận:</strong> Dán ICE → 🎉 Video call thành công!
+              </div>
+            </div>
+          </div>
         </div>
         <div class="info-item">
-          <strong>🔧 Ưu điểm:</strong>
+          <strong>✨ Ưu điểm:</strong>
           <ul>
-            <li>Hoàn toàn không cần server</li>
-            <li>Bảo mật cao (end-to-end)</li>
-            <li>Hoạt động offline sau khi thiết lập</li>
-            <li>Không có giới hạn thời gian</li>
+            <li>🔒 Bảo mật cao nhất (không server nào biết nội dung)</li>
+            <li>🌐 Hoạt động hoàn toàn offline sau khi kết nối</li>
+            <li>⏰ Không giới hạn thời gian</li>
+            <li>🚀 Kết nối P2P trực tiếp</li>
           </ul>
         </div>
       </div>

@@ -67,8 +67,11 @@ class WebRTCSDPExchange {
       this.createPeerConnection();
       await this.createOffer();
       this.showExchangeInterface();
+      this.updateInstructions(
+        "📤 Bước 1: Copy thông tin SDP bên dưới và gửi cho người nhận qua chat, email, hoặc bất kỳ cách nào"
+      );
       this.updateStatus(
-        "Đã tạo Offer! Copy SDP và gửi cho người nhận.",
+        "✅ Đã tạo thông tin kết nối! Copy SDP và gửi cho người nhận.",
         "connected"
       );
     } catch (error) {
@@ -85,7 +88,13 @@ class WebRTCSDPExchange {
       await this.startLocalStream();
       this.createPeerConnection();
       this.showExchangeInterface();
-      this.updateStatus("Sẵn sàng! Dán SDP Offer từ người gọi.", "connected");
+      this.updateInstructions(
+        "📥 Bước 1: Dán thông tin SDP từ người gọi vào ô bên dưới, sau đó nhấn 'Xử lý'"
+      );
+      this.updateStatus(
+        "✅ Sẵn sàng! Dán SDP từ người gọi vào ô bên dưới.",
+        "connected"
+      );
     } catch (error) {
       console.error("Error receiving call:", error);
       this.updateStatus("Lỗi khởi tạo: " + error.message, "error");
@@ -166,7 +175,7 @@ class WebRTCSDPExchange {
     const offerString = JSON.stringify(offer);
     this.sdpTextarea.value = offerString;
     this.updateStatus(
-      "Offer đã được tạo! Copy và gửi cho người nhận.",
+      "✅ Thông tin kết nối đã sẵn sàng! Copy SDP và gửi cho người nhận.",
       "connected"
     );
   }
@@ -184,7 +193,13 @@ class WebRTCSDPExchange {
       if (this.isInitiator) {
         // We're the initiator, this should be an answer
         await this.peerConnection.setRemoteDescription(sdp);
-        this.updateStatus("Đã nhận Answer! Copy ICE và gửi.", "connected");
+        this.updateInstructions(
+          "📤 Bước 3: Copy thông tin ICE bên dưới và gửi cho người nhận"
+        );
+        this.updateStatus(
+          "✅ Đã nhận phản hồi! Copy ICE và gửi cho người nhận.",
+          "connected"
+        );
 
         // Process any pending ICE candidates
         for (const candidate of this.pendingIceCandidates) {
@@ -199,8 +214,11 @@ class WebRTCSDPExchange {
 
         const answerString = JSON.stringify(answer);
         this.sdpTextarea.value = answerString;
+        this.updateInstructions(
+          "📤 Bước 2: Copy thông tin Answer bên dưới và gửi lại cho người gọi"
+        );
         this.updateStatus(
-          "Đã tạo Answer! Copy và gửi lại cho người gọi.",
+          "✅ Đã tạo phản hồi! Copy Answer và gửi lại cho người gọi.",
           "connected"
         );
       }
@@ -225,7 +243,13 @@ class WebRTCSDPExchange {
         await this.peerConnection.addIceCandidate(candidate);
       }
 
-      this.updateStatus("Đã thêm ICE candidates!", "connected");
+      this.updateInstructions(
+        "🎉 Hoàn tất! Video call sẽ bắt đầu trong vài giây..."
+      );
+      this.updateStatus(
+        "✅ Đã thêm thông tin mạng! Kết nối đang được thiết lập...",
+        "connected"
+      );
     } catch (error) {
       console.error("Error processing ICE:", error);
       this.updateStatus("Lỗi xử lý ICE: " + error.message, "error");
@@ -338,6 +362,15 @@ class WebRTCSDPExchange {
     this.muteBtn.classList.remove("active");
     this.videoBtn.textContent = "📹";
     this.videoBtn.classList.remove("active");
+  }
+
+  updateInstructions(message) {
+    const instructionElement = document.querySelector(
+      "#instructions .instruction-step"
+    );
+    if (instructionElement) {
+      instructionElement.innerHTML = `<h4>📋 Hướng dẫn</h4><p>${message}</p>`;
+    }
   }
 
   updateStatus(message, type = "") {
